@@ -75,36 +75,44 @@ main_newinstall()
 	usermod -a -G www-data www-data
 
 	# install all needed packages, e.g., Apache, PHP, SQLite
-	apt-get install -y apache2 openssl ssl-cert libapache2-mod-php5 php5-cli php5-sqlite php5-gd php5-curl php5-common php5-cgi sqlite php-pear php-apc git-core ca-certificates
+	apt-get install -y nginx openssl ssl-cert php5-cli php5-fpm php5-sqlite php5-gd php5-curl php5-common php5-cgi sqlite php-pear php-apc git-core ca-certificates
+
+
+	/etc/init.d/php5-fpm restart
+	/etc/init.d/nginx restart
+	
+
 
 	# perform firmware update with 240 MB RAM, and 16 MB video
 	wget http://goo.gl/1BOfJ -O /usr/bin/rpi-update && chmod +x /usr/bin/rpi-update
 	rpi-update 240
 
+	sudo mkdir /etc/nginx/certs
+
 	# generate self-signed certificate that is valid for one year
     dialog --backtitle "PetRockBlock.com - PiCloud Setup." --msgbox "We are now going to create a self-signed certificate. You can simply press ENTER when you are asked for country name etc. or enter whatever you want." 20 60    
 	clear
-	openssl req $@ -new -x509 -days 365 -nodes -out /etc/apache2/apache.pem -keyout /etc/apache2/apache.pem
-	chmod 600 /etc/apache2/apache.pem
+	openssl req $@ -new -x509 -days 365 -nodes -out /etc/nginx/certs/oc.pem -keyout /etc/nginx/certs/oc.key
+	chmod 600 /etc/nginx/certs/oc.pem
 
 	# enable Apache modules (as explained at http://owncloud.org/support/install/, Section 2.3)
-	a2enmod ssl
-	a2enmod rewrite
-	a2enmod headers
+#	a2enmod ssl
+#	a2enmod rewrite
+#	a2enmod headers
 
 	# disable unneccessary (for Owncloud) module(s)
-	a2dismod cgi
-	a2dismod authz_groupfile
+#	a2dismod cgi
+#	a2dismod authz_groupfile
 
 	# configure Apache to use self-signed certificate
-	mv /etc/apache2/sites-available/default-ssl /etc/apache2/sites-available/default-ssl.bak
-	sed 's|/etc/ssl/certs/ssl-cert-snakeoil.pem|/etc/apache2/apache.pem|g;s|AllowOverride None|AllowOverride All|g;s|SSLCertificateKeyFile|# SSLCertificateKeyFile|g' /etc/apache2/sites-available/default-ssl.bak > tmp
-	mv tmp /etc/apache2/sites-available/default-ssl
+#	mv /etc/apache2/sites-available/default-ssl /etc/apache2/sites-available/default-ssl.bak
+#	sed 's|/etc/ssl/certs/ssl-cert-snakeoil.pem|/etc/apache2/apache.pem|g;s|AllowOverride None|AllowOverride All|g;s|SSLCertificateKeyFile|# SSLCertificateKeyFile|g' /etc/apache2/sites-available/default-ssl.bak > tmp
+#	mv tmp /etc/apache2/sites-available/default-ssl
 
 	# limit number of parallel Apache processes
-	mv /etc/apache2/apache2.conf /etc/apache2/apache2.conf.bak 
-	sed 's|StartServers          5|StartServers          2|g;s|MinSpareServers       5|MinSpareServers       2|g;s|MaxSpareServers      10|MaxSpareServers       3|g' /etc/apache2/apache2.conf.bak > tmp
-	mv tmp /etc/apache2/apache2.conf
+#	mv /etc/apache2/apache2.conf /etc/apache2/apache2.conf.bak 
+#	sed 's|StartServers          5|StartServers          2|g;s|MinSpareServers       5|MinSpareServers       2|g;s|MaxSpareServers      10|MaxSpareServers       3|g' /etc/apache2/apache2.conf.bak > tmp
+#	mv tmp /etc/apache2/apache2.conf
 
 	# set ARM frequency to 800 MHz (attention: should be safe, but do this at your own risk)
 	echo -e "\narm_freq=800\nsdram_freq=450\ncore_freq=350" >> /boot/config.txt
@@ -115,7 +123,7 @@ main_newinstall()
 	dphys-swapfile swapon
 
 	# enable SSL site
-	a2ensite default-ssl
+#	a2ensite default-ssl
 
 	mkdir -p /var/www/owncloud
 	downloadLatestOwncloudRelease

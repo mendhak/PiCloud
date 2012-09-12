@@ -1,0 +1,32 @@
+# owncloud
+server {
+  listen 80;
+  server_name 192.168.0.49 localhost pi.mendhak.com;
+  rewrite ^ https://$server_name$request_uri? permanent;  # enforce https
+}
+
+# owncloud (ssl/tls)
+server {
+  listen 443 ssl;
+  server_name 192.168.0.49 localhost pi.mendhak.com;
+  ssl_certificate /etc/nginx/certs/oc.pem;
+  ssl_certificate_key /etc/nginx/certs/oc.key;
+  root /var/www/owncloud;
+  index index.php;
+  client_max_body_size 20M; # set maximum upload size
+
+  # deny direct access
+  location ~ ^/(data|config|\.ht|db_structure\.xml|README) {
+    deny all;
+  }
+
+
+
+  # enable php
+  location ~ \.php$ {
+    fastcgi_pass unix:/var/run/php5-fpm.sock;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    fastcgi_param HTTPS on;
+    include fastcgi_params;
+  }
+}
